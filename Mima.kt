@@ -59,7 +59,7 @@ class MimaVonNeumann(var stepping: Boolean) {
                     true
                 } else {
                     return if (commands.containsKey(parts[1])) {
-                        labels[parts[0]] = index
+                        labels[parts[0]] = index - 1
                         true
                     } else {
                         false
@@ -91,19 +91,19 @@ class MimaVonNeumann(var stepping: Boolean) {
 
             when (parts.size) {
                 1 -> {
-                    memory[line] = commands[parts[0]]!!.toInt().toBinaryString().toInt(2)
+                    memory[line] = commands[parts[0]]!!.toInt().shl(28)
                     line++
                 }
 
                 2 -> {
                     if (parts[1].toIntOrNull() == null) {
                         if (!commands.containsKey(parts[0])) {
-                            memory[line] = commands[parts[1]]!!.toInt().toBinaryString().toInt(2)
+                            memory[line] = commands[parts[1]]!!.toInt().shl(28)
                         } else {
-                            memory[line] = commands[parts[0]]!!.toInt().toBinaryString().toInt(2) or labels[parts[1]]!!.toInt()
+                            memory[line] = commands[parts[0]]!!.toInt().shl(28) or labels[parts[1]]!!.toInt()
                         }
                     } else {
-                        memory[line] = commands[parts[0]]!!.toInt().toBinaryString().toInt(2) or parts[1].toInt()
+                        memory[line] = commands[parts[0]]!!.toInt().shl(28) or parts[1].toInt()
                     }
                     line++
                 }
@@ -111,10 +111,10 @@ class MimaVonNeumann(var stepping: Boolean) {
                 3 -> {
                     //LBL JMP LBL
                     if (parts[2].toIntOrNull() == null) {
-                        memory[line] = commands[parts[1]]!!.toInt().toBinaryString().toInt(2) or labels[parts[2]]!!.toInt()
+                        memory[line] = commands[parts[1]]!!.toInt().shl(28) or labels[parts[2]]!!.toInt()
                         //LBL CMD INPUT
                     } else {
-                        memory[line] = commands[parts[1]]!!.toInt().toBinaryString().toInt(2) or parts[2].toInt()
+                        memory[line] = commands[parts[1]]!!.toInt().shl(28) or parts[2].toInt()
                     }
                     line++
                 }
@@ -152,9 +152,8 @@ class MimaVonNeumann(var stepping: Boolean) {
 
     private fun execute(cmd: Int) {
 
-        var code = cmd and ("1111" + "0".repeat(27)).toInt(2)
-        code = code.shr(27)
-        val data = cmd and ("0000" + "1".repeat(27)).toInt(2)
+        val code = cmd.ushr(28)
+        val data = cmd and (-1).ushr(4)
 
         when (revCommands[code]) {
             "HALT" -> halted = true
@@ -171,6 +170,9 @@ class MimaVonNeumann(var stepping: Boolean) {
             "JMP" -> ip = data
             "JMN" -> ip = if (acc == -1) data else ip
             "PUT" -> println("Memory at $data = ${memory[data]}")
+            else -> {
+                error("invalid command")
+            }
         }
     }
 
@@ -185,7 +187,7 @@ class MimaVonNeumann(var stepping: Boolean) {
     }
 }
 
-fun printUsageAndExit(){
+fun printUsageAndExit() {
     println("Usage: java -jar mima.jar <input> [-d | -s]\n" +
             "\t-d: rudimentary stepping functionality\n" +
             "\t-s: summary at the end of execution (use this for a complete memory view)")
@@ -199,18 +201,10 @@ fun Array<Int>.toBinaryString(): String {
     var string = ""
     var index = 0
     this.forEach {
-        string += "$index => ${"0".repeat(31 - it.toString(2).length) + it.toString(2)}\n"
+        string += " $index => ${"0x" + Integer.toHexString(it)}\n"
         index++
     }
     return string
-}
-fun Int.toBinaryString(): String {
-    var v = this.toString(2)
-    val c = 4 - v.length
-    v = "0".repeat(c) + v
-    val cnt = 31 - v.length
-    v += "0".repeat(cnt)
-    return v
 }
 
 /**
@@ -261,3 +255,5 @@ fun main(args: Array<String>) {
         else -> printUsageAndExit()
     }
 }
+
+
