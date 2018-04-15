@@ -13,7 +13,7 @@ If you are a student at said institute, this project might prove to be useful in
 ### Flags
 |Flag|Effect|
 |----|------|
-|-d| starts the interpreter in a sort of "debug" mode in which you can stepp through the code line by line|
+|-d| starts the interpreter in a sort of "debug" mode in which you can step through the code line by line|
 |-s| prints a "summary" at the end of execution (Memory view)|
 #### Debug mode
 |Input|Functionality|
