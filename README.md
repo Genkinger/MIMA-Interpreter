@@ -11,14 +11,16 @@ If you are a student at said institute, this project might prove to be useful in
 # Usage
 
 ### Flags
--d starts the interpreter in a sort of "debug" mode in which you can stepp through the code line by line
--s prints a "summary" at the end of execution (Memory view)
+|Flag|Effect|
+|----|------|
+|-d| starts the interpreter in a sort of "debug" mode in which you can stepp through the code line by line|
+|-s| prints a "summary" at the end of execution (Memory view)|
 #### Debug mode
 |Input|Functionality|
 |-----|-------------|
-|r,reg,register,registers| prints the contents of the registers
-|d,dbg,debug| prints the contents of the entire memory
-|<Enter>| step (increase the IP by one)
+|r,reg,register,registers| prints the contents of the registers|
+|d,dbg,debug| prints the contents of the entire memory|
+|<Enter>| step (increase the IP by one)|
 
 # Problems
 - currently operates with 32bit address sizes instead of 24bit
