@@ -20,7 +20,8 @@ If you are a student at said institute, this project might prove to be useful in
 |-----|-------------|
 |r,reg,register,registers| prints the contents of the registers|
 |d,dbg,debug| prints the contents of the entire memory|
-|<Enter>| step (increase the IP by one)|
+|x [address]| examines the contents in memory at address|
+|"Enter"| step (increase the IP by one)|
 
 # Problems
 - currently operates with 32bit address sizes instead of 24bit
