@@ -1,0 +1,41 @@
+buildscript{
+	ext.kotlin_version = '1.2.31'
+	repositories{
+		mavenCentral()	
+	}
+
+	dependencies{
+		classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+	}
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'java'
+
+sourceSets{
+	main.java.srcDirs += 'src/main/kotlin'
+}
+
+repositories{
+	mavenCentral()
+}
+
+dependencies{
+ 	compile group: 'com.xenomachina', name: 'kotlin-argparser', version: '2.0.6'
+	compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}
+
+jar{
+	manifest{
+		attributes 'Main-Class': 'MimaKt'	
+	}
+	from{ configurations.compile.collect { it.isDirectory() ? it : zipTree(it)}}
+}
+
+compileKotlin{
+	kotlinOptions{
+		verbose = true
+		noStdlib = false
+	}	
+}
+

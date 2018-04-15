@@ -1,7 +1,15 @@
 import java.io.*
 import kotlin.system.exitProcess
+import com.xenomachina.argparser.*
 
-class MimaVonNeumann(var stepping: Boolean) {
+class Arguments(parser: ArgParser){
+	val debug by parser.flagging("-d","--debug",help = "enable rudimentary debugging")
+	val summary by parser.flagging("-s","--summary",help = "enable summary")
+	val memsize by parser.storing("-m","--memsize",help = "size of the memory"){ toInt() }
+	val inputfile by parser.positional("SOURCE",help = "the input file to parse")
+}
+
+class MimaVonNeumann(val debug: Boolean, val summary: Boolean,val memsize: Int) {
     private val commands = mapOf(
             "LDC" to 0b0001,
             "LDV" to 0b0010,
@@ -22,7 +30,7 @@ class MimaVonNeumann(var stepping: Boolean) {
     private val revCommands = commands.entries.associateBy({ it.value }, { it.key })
     var halted = false
     var code = mutableListOf<String>()
-    var memory: Array<Int> = Array(512, { _ -> 0 })
+    var memory: Array<Int> = Array(memsize, { _ -> 0 })
     var labels = mutableMapOf<String, Int>()
     var errorflag = false
 
@@ -109,12 +117,10 @@ class MimaVonNeumann(var stepping: Boolean) {
                 }
 
                 3 -> {
-                    //LBL JMP LBL
                     if (parts[2].toIntOrNull() == null) {
                         memory[line] = commands[parts[1]]!!.toInt().shl(28) or labels[parts[2]]!!.toInt()
-                        //LBL CMD INPUT
                     } else {
-                        memory[line] = commands[parts[1]]!!.toInt().shl(28) or parts[2].toInt()
+                            memory[line] = commands[parts[1]]!!.toInt().shl(28) or parts[2].toInt()
                     }
                     line++
                 }
@@ -124,15 +130,15 @@ class MimaVonNeumann(var stepping: Boolean) {
 
     fun executeCode() {
         while (!halted && !errorflag) {
-            if (stepping) {
+            if (debug) {
                 println(">> Executing: ${code[ip]}")
                 val input = readLine()
                 when (input) {
-                    "d", "dbg", "debug" -> debug()
+                    "d", "dbg", "debug" -> summary()
                     "r", "reg", "register", "registers" -> registers()
                     "q", "quit", "exit" -> exitProcess(0)
                     else -> {
-                        val bool = input!!.matches(Regex("""x [0-9]{1,3}"""))
+                        val bool = input!!.matches(Regex("""x [0-9]"""))
 
                         if (bool) {
                             val parts = input.split(" ")
@@ -176,28 +182,30 @@ class MimaVonNeumann(var stepping: Boolean) {
         }
     }
 
+    fun begin(infile: String){
+	    loadFile(infile)
+	    loadCode()
+	    executeCode()
+	    if(summary){
+		    summary()
+	    }
+    }
+    
     private fun registers() {
         println("ACC: $acc")
         println("IP: $ip")
     }
 
-    fun debug() {
+    fun summary() {
         registers()
-        println("MEMORY:\n${memory.toBinaryString()}")
+        println("MEMORY:\n${memory.toHexString()}")
     }
-}
-
-fun printUsageAndExit() {
-    println("Usage: java -jar mima.jar <input> [-d | -s]\n" +
-            "\t-d: rudimentary stepping functionality\n" +
-            "\t-s: summary at the end of execution (use this for a complete memory view)")
-    exitProcess(-1)
 }
 
 /**
  * Extensions
  */
-fun Array<Int>.toBinaryString(): String {
+fun Array<Int>.toHexString(): String {
     var string = ""
     var index = 0
     this.forEach {
@@ -207,53 +215,21 @@ fun Array<Int>.toBinaryString(): String {
     return string
 }
 
+
 /**
  * Entry
  */
-fun main(args: Array<String>) {
-
-    when (args.size) {
-        1 -> {
-            with(MimaVonNeumann(false)) {
-                loadFile(args[0])
-                loadCode()
-                executeCode()
-            }
-        }
-        2 -> {
-            when (args[1]) {
-                "-d" -> {
-                    with(MimaVonNeumann(true)) {
-                        loadFile(args[0])
-                        loadCode()
-                        executeCode()
-                    }
-                }
-                "-s" -> {
-                    with(MimaVonNeumann(false)) {
-                        loadFile(args[0])
-                        loadCode()
-                        executeCode()
-                        debug()
-                    }
-                }
-                else -> printUsageAndExit()
-            }
-        }
-        3 -> {
-            if (args[1] == "-d" && args[2] == "-s" || args[1] == "-s" && args[2] == "-d") {
-                with(MimaVonNeumann(true)) {
-                    loadFile(args[0])
-                    loadCode()
-                    executeCode()
-                    debug()
-                }
-            } else {
-                printUsageAndExit()
-            }
-        }
-        else -> printUsageAndExit()
-    }
+fun main(args: Array<String>) = mainBody {
+	ArgParser(args).parseInto(::Arguments).run{
+		with(MimaVonNeumann(debug,summary)){
+			begin(inputfile)
+			/*
+			loadFile(inputfile)
+			loadCode()
+			executeCode()
+			*/
+		}
+	}
 }
 
 
